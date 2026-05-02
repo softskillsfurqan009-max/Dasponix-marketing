@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Nova Marketing</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0A0A0A; font-family: 'Inter', sans-serif; color: #E5E5E5; }
+        .admin-nav { background: #111; padding: 1rem 2rem; border-bottom: 2px solid #D4AF37; display: flex; justify-content: space-between; align-items: center; }
+        .admin-nav h2 { color: #D4AF37; }
+        .logout-btn { background: #D4AF37; color: black; padding: 8px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .section { background: #111; padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem; border: 1px solid #222; }
+        .section h3 { color: #D4AF37; margin-bottom: 1rem; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #222; }
+        button { background: #D4AF37; color: black; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin: 0 4px; }
+        button.danger { background: #dc3545; color: white; }
+        .add-btn { margin-bottom: 1rem; padding: 10px 20px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #111; padding: 2rem; border-radius: 16px; width: 500px; border: 1px solid #D4AF37; }
+        .modal-content input, .modal-content textarea { width: 100%; padding: 10px; margin: 10px 0; background: #1A1A1A; border: 1px solid #333; color: white; border-radius: 8px; }
+        .modal-buttons { display: flex; gap: 1rem; margin-top: 1rem; }
+        .modal-buttons button { flex: 1; }
+    </style>
+</head>
+<body>
+    <div class="admin-nav">
+        <h2>⚡ NOVA MARKETING ADMIN</h2>
+        <a href="/admin/logout" class="logout-btn">Logout</a>
+    </div>
+    
+    <div class="container">
+        <div class="section">
+            <h3>👥 Team Members</h3>
+            <button onclick="showAddTeamModal()" class="add-btn">+ Add Team Member</button>
+            <table id="teamTable"><thead><tr><th>Name</th><th>Title</th><th>Actions</th></tr></thead><tbody></tbody></table>
+        </div>
+        
+        <div class="section">
+            <h3>📁 Projects</h3>
+            <button onclick="showAddProjectModal()" class="add-btn">+ Add Project</button>
+            <table id="projectsTable"><thead><tr><th>Name</th><th>Category</th><th>Link</th><th>Actions</th></tr></thead><tbody></tbody></table>
+        </div>
+        
+        <div class="section">
+            <h3>📬 Contact Messages</h3>
+            <table id="messagesTable"><thead><tr><th>Name</th><th>Email</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+
+    <div id="teamModal" class="modal"><div class="modal-content"><h3>Add/Edit Team Member</h3><input type="text" id="teamName" placeholder="Name"><input type="text" id="teamTitle" placeholder="Title"><textarea id="teamDesc" placeholder="Description" rows="3"></textarea><input type="text" id="teamSkills" placeholder="Skills"><input type="text" id="teamExp" placeholder="Experience"><input type="text" id="teamImage" placeholder="Icon"><div class="modal-buttons"><button onclick="saveTeam()">Save</button><button onclick="closeModal('teamModal')">Cancel</button></div></div></div>
+    <div id="projectModal" class="modal"><div class="modal-content"><h3>Add/Edit Project</h3><input type="text" id="projectName" placeholder="Name"><input type="text" id="projectCategory" placeholder="Category"><textarea id="projectDesc" placeholder="Description" rows="3"></textarea><input type="text" id="projectLink" placeholder="URL"><input type="text" id="projectClient" placeholder="Client"><input type="text" id="projectResults" placeholder="Results"><input type="text" id="projectImage" placeholder="Icon"><div class="modal-buttons"><button onclick="saveProject()">Save</button><button onclick="closeModal('projectModal')">Cancel</button></div></div></div>
+
+    <script>
+        let editTeamId = null, editProjectId = null;
+        async function loadTeam() { const res = await axios.get('/api/team'); document.querySelector('#teamTable tbody').innerHTML = res.data.map(m => `<tr><td>${m.name}</td><td>${m.title}</td><td><button onclick="editTeam(${m.id})">Edit</button><button class="danger" onclick="deleteTeam(${m.id})">Delete</button></td></tr>`).join(''); }
+        async function loadProjects() { const res = await axios.get('/api/projects'); document.querySelector('#projectsTable tbody').innerHTML = res.data.map(p => `<tr><td>${p.name}</td><td>${p.category}</td><td><a href="${p.link}" target="_blank" style="color:#D4AF37;">View</a></td><td><button onclick="editProject(${p.id})">Edit</button><button class="danger" onclick="deleteProject(${p.id})">Delete</button></td></tr>`).join(''); }
+        async function loadMessages() { const res = await axios.get('/api/contact/messages'); document.querySelector('#messagesTable tbody').innerHTML = res.data.map(m => `<tr><td>${m.name}</td><td>${m.email}</td><td>${m.message.substring(0,50)}...</td><td>${m.created_at || 'Just now'}</td><td><button class="danger" onclick="deleteMessage(${m.id})">Delete</button></td></tr>`).join(''); }
+        async function deleteTeam(id) { if(confirm('Delete?')) { await axios.delete(`/api/team/${id}`); loadTeam(); } }
+        async function deleteProject(id) { if(confirm('Delete?')) { await axios.delete(`/api/projects/${id}`); loadProjects(); } }
+        async function deleteMessage(id) { if(confirm('Delete?')) { await axios.delete(`/api/contact/messages/${id}`); loadMessages(); } }
+        function showAddTeamModal() { editTeamId = null; document.getElementById('teamName').value = ''; document.getElementById('teamTitle').value = ''; document.getElementById('teamDesc').value = ''; document.getElementById('teamSkills').value = ''; document.getElementById('teamExp').value = ''; document.getElementById('teamImage').value = ''; document.getElementById('teamModal').style.display = 'flex'; }
+        async function editTeam(id) { const res = await axios.get('/api/team'); const m = res.data.find(m => m.id === id); editTeamId = id; document.getElementById('teamName').value = m.name; document.getElementById('teamTitle').value = m.title; document.getElementById('teamDesc').value = m.description; document.getElementById('teamSkills').value = (m.skills || []).join(', '); document.getElementById('teamExp').value = m.experience || ''; document.getElementById('teamImage').value = m.image || '👤'; document.getElementById('teamModal').style.display = 'flex'; }
+        async function saveTeam() { const data = { name: document.getElementById('teamName').value, title: document.getElementById('teamTitle').value, description: document.getElementById('teamDesc').value, skills: document.getElementById('teamSkills').value.split(',').map(s => s.trim()), experience: document.getElementById('teamExp').value, image: document.getElementById('teamImage').value }; if(editTeamId) await axios.put(`/api/team/${editTeamId}`, data); else await axios.post('/api/team', data); closeModal('teamModal'); loadTeam(); }
+        function showAddProjectModal() { editProjectId = null; document.getElementById('projectName').value = ''; document.getElementById('projectCategory').value = ''; document.getElementById('projectDesc').value = ''; document.getElementById('projectLink').value = ''; document.getElementById('projectClient').value = ''; document.getElementById('projectResults').value = ''; document.getElementById('projectImage').value = ''; document.getElementById('projectModal').style.display = 'flex'; }
+        async function editProject(id) { const res = await axios.get('/api/projects'); const p = res.data.find(p => p.id === id); editProjectId = id; document.getElementById('projectName').value = p.name; document.getElementById('projectCategory').value = p.category; document.getElementById('projectDesc').value = p.description; document.getElementById('projectLink').value = p.link; document.getElementById('projectClient').value = p.client || ''; document.getElementById('projectResults').value = p.results || ''; document.getElementById('projectImage').value = p.image || '📁'; document.getElementById('projectModal').style.display = 'flex'; }
+        async function saveProject() { const data = { name: document.getElementById('projectName').value, category: document.getElementById('projectCategory').value, description: document.getElementById('projectDesc').value, link: document.getElementById('projectLink').value, client: document.getElementById('projectClient').value, results: document.getElementById('projectResults').value, image: document.getElementById('projectImage').value }; if(editProjectId) await axios.put(`/api/projects/${editProjectId}`, data); else await axios.post('/api/projects', data); closeModal('projectModal'); loadProjects(); }
+        function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+        loadTeam(); loadProjects(); loadMessages();
+    </script>
+</body>
+</html>
