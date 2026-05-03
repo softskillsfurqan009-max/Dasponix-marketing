@@ -5,8 +5,15 @@ from datetime import datetime
 import os
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-app.secret_key = 'nova-secret-key-2025'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'nova-secret-key-2025')
 CORS(app)
+
+# ============================================
+# STATIC FILES ROUTE (Vercel Fix)
+# ============================================
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('static', filename)
 
 # ============================================
 # TEAM MEMBERS DATA (UPDATED EXPERIENCE YEARS)
@@ -108,13 +115,12 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ============================================
+# FRONTEND ROUTES
+# ============================================
 @app.route('/')
 def index():
     return render_template('index.html')
-
-@app.route('/static/<path:filename>')
-def serve_static(filename):
-    return send_from_directory('static', filename)
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -137,6 +143,9 @@ def admin_logout():
 def admin_dashboard():
     return render_template('admin/dashboard.html')
 
+# ============================================
+# API ROUTES
+# ============================================
 @app.route('/api/team', methods=['GET'])
 def get_team():
     return jsonify(team_members)
@@ -219,7 +228,7 @@ def submit_contact():
     }
     contact_messages.append(message)
     print(f"📩 New message from {data['name']}")
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'message': 'Message sent successfully!'})
 
 @app.route('/api/contact/messages', methods=['GET'])
 @login_required
@@ -227,12 +236,22 @@ def get_messages():
     return jsonify(contact_messages)
 
 @app.route('/api/contact/messages/<int:id>', methods=['DELETE'])
-@login_requireda
+@login_required
 def delete_message(id):
     global contact_messages
     contact_messages = [m for m in contact_messages if m['id'] != id]
     return jsonify({'success': True})
 
+# ============================================
+# HEALTH CHECK ROUTE (Vercel needs this)
+# ============================================
+@app.route('/api/health')
+def health_check():
+    return jsonify({'status': 'ok', 'message': 'Nova Marketing API is running!'})
+
+# ============================================
+# RUN APP
+# ============================================
 if __name__ == '__main__':
     print("=" * 60)
     print("🚀 NOVA MARKETING BACKEND STARTED")
