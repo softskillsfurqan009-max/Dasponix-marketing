@@ -227,7 +227,7 @@ def get_messages():
     return jsonify(contact_messages)
 
 @app.route('/api/contact/messages/<int:id>', methods=['DELETE'])
-@login_required
+@login_requireda
 def delete_message(id):
     global contact_messages
     contact_messages = [m for m in contact_messages if m['id'] != id]
