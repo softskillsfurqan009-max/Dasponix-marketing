@@ -6,8 +6,8 @@
     <title>Admin Dashboard - Nova Marketing</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/static/profile-change.png">
-    <link rel="shortcut icon" type="image/png" href="/static/profile-change.png">
+    <link rel="icon" type="image/png" href="/static/profile-pic.png">
+    <link rel="shortcut icon" type="image/png" href="/static/profile-pic.png">
     
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -198,7 +198,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 500px;
+            min-width: 600px;
         }
 
         th, td {
@@ -327,6 +327,15 @@
         a:hover {
             text-decoration: underline;
         }
+
+        /* Experience badge */
+        .exp-badge {
+            background: rgba(32, 137, 172, 0.1);
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: #17647E;
+        }
     </style>
 </head>
 <body>
@@ -371,7 +380,7 @@
         <!-- Team Section -->
         <div id="teamSection" class="section active-section">
             <div class="section-header">
-                <h3><i class="fas fa-users"></i> Team Management</h3>
+                <h3><i class="fas fa-users"></i> Team Management (Name + Experience)</h3>
                 <button class="add-btn" onclick="showAddTeamModal()"><i class="fas fa-plus"></i> Add Member</button>
             </div>
             <div class="table-wrapper">
@@ -380,8 +389,10 @@
                         <tr>
                             <th>Name</th>
                             <th>Title</th>
+                            <th>Experience</th>
+                            <th>Skills</th>
                             <th>Actions</th>
-                        </table>
+                        </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
@@ -435,11 +446,11 @@
     <div id="teamModal" class="modal">
         <div class="modal-content">
             <h3><i class="fas fa-user-plus"></i> Add/Edit Team Member</h3>
-            <input type="text" id="teamName" placeholder="Full Name">
-            <input type="text" id="teamTitle" placeholder="Title">
+            <input type="text" id="teamName" placeholder="Full Name *" required>
+            <input type="text" id="teamTitle" placeholder="Title (e.g., SEO Expert) *" required>
             <textarea id="teamDesc" placeholder="Description" rows="3"></textarea>
-            <input type="text" id="teamSkills" placeholder="Skills (comma separated)">
-            <input type="text" id="teamExp" placeholder="Experience">
+            <input type="text" id="teamSkills" placeholder="Skills (comma separated) e.g., SEO, Keywords">
+            <input type="text" id="teamExp" placeholder="Experience (e.g., 2+ years in SEO industry...)" required>
             <input type="text" id="teamImage" placeholder="Icon Emoji (e.g., 👨‍💻)">
             <div class="modal-buttons">
                 <button class="save-btn" onclick="saveTeam()">Save</button>
@@ -452,10 +463,10 @@
     <div id="projectModal" class="modal">
         <div class="modal-content">
             <h3><i class="fas fa-folder-plus"></i> Add/Edit Project</h3>
-            <input type="text" id="projectName" placeholder="Project Name">
-            <input type="text" id="projectCategory" placeholder="Category">
+            <input type="text" id="projectName" placeholder="Project Name *" required>
+            <input type="text" id="projectCategory" placeholder="Category *" required>
             <textarea id="projectDesc" placeholder="Description" rows="3"></textarea>
-            <input type="text" id="projectLink" placeholder="Project URL">
+            <input type="text" id="projectLink" placeholder="Project URL *" required>
             <input type="text" id="projectClient" placeholder="Client Name">
             <input type="text" id="projectResults" placeholder="Results">
             <input type="text" id="projectImage" placeholder="Icon Emoji (e.g., 📁)">
@@ -487,8 +498,17 @@
                 const tbody = document.querySelector('#teamTable tbody');
                 tbody.innerHTML = team.map(m => `
                     <tr>
-                        <tr>${m.name}</td>
-                        <td>${m.title}</td>
+                        <td>
+                            <strong>${m.name}</strong><br>
+                            <small style="color:#666;">${m.title || 'No title'}</small>
+                        </td>
+                        <td>
+                            <div class="exp-badge">🎓 ${m.experience || 'Not specified'}</div>
+                        </td>
+                        <td>
+                            ${(m.skills || []).slice(0, 3).map(s => `<span class="exp-badge" style="display:inline-block; margin:2px;">${s}</span>`).join('')}
+                            ${(m.skills || []).length > 3 ? `<span class="exp-badge">+${(m.skills || []).length - 3}</span>` : ''}
+                        </td>
                         <td>
                             <button class="action-btn" onclick="editTeam(${m.id})"><i class="fas fa-edit"></i> Edit</button>
                             <button class="action-btn delete-btn" onclick="deleteTeam(${m.id})"><i class="fas fa-trash"></i> Delete</button>
@@ -584,14 +604,24 @@
         }
 
         async function saveTeam() {
+            const name = document.getElementById('teamName').value.trim();
+            const title = document.getElementById('teamTitle').value.trim();
+            const exp = document.getElementById('teamExp').value.trim();
+            
+            if (!name || !title || !exp) {
+                alert('Please fill Name, Title and Experience fields!');
+                return;
+            }
+            
             const data = {
-                name: document.getElementById('teamName').value,
-                title: document.getElementById('teamTitle').value,
+                name: name,
+                title: title,
                 description: document.getElementById('teamDesc').value,
-                skills: document.getElementById('teamSkills').value.split(',').map(s => s.trim()),
-                experience: document.getElementById('teamExp').value,
-                image: document.getElementById('teamImage').value
+                skills: document.getElementById('teamSkills').value.split(',').map(s => s.trim()).filter(s => s),
+                experience: exp,
+                image: document.getElementById('teamImage').value || '👤'
             };
+            
             if(editTeamId) await axios.put(`/api/team/${editTeamId}`, data);
             else await axios.post('/api/team', data);
             closeModal('teamModal');
