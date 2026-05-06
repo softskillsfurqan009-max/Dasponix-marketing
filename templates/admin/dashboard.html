@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Nova Marketing</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/profile-change.png">
+    <link rel="shortcut icon" type="image/png" href="/static/profile-change.png">
+    
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -376,7 +381,7 @@
                             <th>Name</th>
                             <th>Title</th>
                             <th>Actions</th>
-                        </tr>
+                        </table>
                     </thead>
                     <tbody></tbody>
                 </table>
@@ -482,7 +487,7 @@
                 const tbody = document.querySelector('#teamTable tbody');
                 tbody.innerHTML = team.map(m => `
                     <tr>
-                        <td>${m.name}</td>
+                        <tr>${m.name}</td>
                         <td>${m.title}</td>
                         <td>
                             <button class="action-btn" onclick="editTeam(${m.id})"><i class="fas fa-edit"></i> Edit</button>
